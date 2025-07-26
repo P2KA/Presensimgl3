@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Kehadiran Pegawai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .signature-pad {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: rgb(240, 247, 237);
+        }
+        .required:after {
+            content: " *";
+            color: red;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Header dengan Logo -->
+        <div class="bg-green-600 p-6 flex items-center">
+            <div class="bg-white p-3 rounded-lg mr-4">
+                <img src="https://kemenkescorpu.kemkes.go.id/_nuxt/img/logo-corpu.76f2f73.png" alt="Logo Perusahaan Anda" class="h-12 object-contain">
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Presensi Peserta Pelatihan Managerial Leader batch 3</h1>
+                <p class="text-blue-100">Kemenkes Corpu</p>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form id="attendanceForm" class="p-6 space-y-6">
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 required">Email</label>
+                <input type="email" id="email" name="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+
+            <!-- Nama Lengkap -->
+            <div>
+                <label for="nama" class="block text-sm font-medium text-gray-700 required">Nama Lengkap</label>
+                <input type="text" id="nama" name="nama" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+
+            <!-- NIP -->
+            <div>
+                <label for="nip" class="block text-sm font-medium text-gray-700 required">NIP</label>
+                <input type="text" id="nip" name="nip" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+
+            <!-- Unit Kerja -->
+            <div>
+                <label for="unit_kerja" class="block text-sm font-medium text-gray-700 required">Unit Kerja</label>
+                <input type="text" id="unit_kerja" name="unit_kerja" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+
+            <!-- Kehadiran -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 required">Kehadiran</label>
+                <div class="mt-1 space-y-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="kehadiran" value="Hadir" required class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <span class="ml-2 text-gray-700">Hadir</span>
+                    </label>
+                    <label class="inline-flex items-center ml-4">
+                        <input type="radio" name="kehadiran" value="Tidak Hadir" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <span class="ml-2 text-gray-700">Tidak Hadir</span>
+                    </label>
+                    <label class="inline-flex items-center ml-4">
+                        <input type="radio" name="kehadiran" value="Izin" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <span class="ml-2 text-gray-700">Izin</span>
+                    </label>
+                    <label class="inline-flex items-center ml-4">
+                        <input type="radio" name="kehadiran" value="Sakit" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <span class="ml-2 text-gray-700">Sakit</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Tanggal -->
+            <div>
+                <label for="tanggal" class="block text-sm font-medium text-gray-700 required">Tanggal</label>
+                <input type="date" id="tanggal" name="tanggal" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+
+            <!-- Tanda Tangan -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 required">Tanda Tangan</label>
+                <div class="mt-1 signature-pad">
+                    <canvas id="signatureCanvas" width="400" height="200" class="w-full"></canvas>
+                </div>
+                <button type="button" onclick="clearSignature()" class="mt-2 text-sm text-blue-600 hover:text-blue-800">Hapus Tanda Tangan</button>
+                <input type="hidden" id="signature" name="signature">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Kirim Formulir
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Google Apps Script URL - Replace with your own -->
+    <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycby366iGdOnFtGzs2DRL-hay_bp4o27n_E1TVYRpC77rMUQrR5mNfLtG_kkvb9KSgh0obA/exec';
+        // Inisialisasi canvas tanda tangan
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startDrawing(e.touches[0]);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            draw(e.touches[0]);
+        });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            document.getElementById('signature').value = canvas.toDataURL();
+        }
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('signature').value = '';
+        }
+
+        // Submit form
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validasi tanda tangan
+            if (!document.getElementById('signature').value) {
+                alert('Harap berikan tanda tangan Anda');
+                return;
+            }
+            
+            // Prepare form data
+            const formData = new FormData(this);
+            
+            // Show loading state
+            const submitBtn = this.querySelector('[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Mengirim...';
+            
+            // Send to Google Sheets
+            fetch(scriptURL, { method: 'POST', body: formData })
+              .then(response => {
+                  alert('Formulir berhasil dikirim!');
+                  this.reset();
+                  clearSignature();
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = 'Kirim Formulir';
+              })
+              .catch(error => {
+                  console.error('Error:', error);
+                  alert('Error saat mengirim formulir!');
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = 'Kirim Formulir';
+              });
+        });
+    </script>
+</body>
+</html>
