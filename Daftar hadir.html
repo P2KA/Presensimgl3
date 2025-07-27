@@ -109,54 +109,87 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycby366iGdOnFtGzs2DRL-hay_bp4o27n_E1TVYRpC77rMUQrR5mNfLtG_kkvb9KSgh0obA/exec';
         // Inisialisasi canvas tanda tangan
         const canvas = document.getElementById('signatureCanvas');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
+const ctx = canvas.getContext('2d');
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
 
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
+// Fungsi mendapatkan posisi relatif terhadap canvas
+function getPos(event) {
+    const rect = canvas.getBoundingClientRect();
+    if (event.touches && event.touches.length > 0) {
+        return {
+            x: event.touches[0].clientX - rect.left,
+            y: event.touches[0].clientY - rect.top
+        };
+    } else {
+        return {
+            x: event.offsetX,
+            y: event.offsetY
+        };
+    }
+}
 
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            startDrawing(e.touches[0]);
-        });
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            draw(e.touches[0]);
-        });
-        canvas.addEventListener('touchend', stopDrawing);
+// Mouse
+canvas.addEventListener('mousedown', (e) => {
+    isDrawing = true;
+    const pos = getPos(e);
+    lastX = pos.x;
+    lastY = pos.y;
+});
+canvas.addEventListener('mousemove', (e) => {
+    if (!isDrawing) return;
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    lastX = pos.x;
+    lastY = pos.y;
+});
+canvas.addEventListener('mouseup', () => {
+    isDrawing = false;
+    document.getElementById('signature').value = canvas.toDataURL();
+});
+canvas.addEventListener('mouseout', () => {
+    isDrawing = false;
+});
 
-        function startDrawing(e) {
-            isDrawing = true;
-            [lastX, lastY] = [e.offsetX, e.offsetY];
-        }
+// Touch (untuk HP)
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    isDrawing = true;
+    const pos = getPos(e);
+    lastX = pos.x;
+    lastY = pos.y;
+});
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (!isDrawing) return;
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    lastX = pos.x;
+    lastY = pos.y;
+});
+canvas.addEventListener('touchend', () => {
+    isDrawing = false;
+    document.getElementById('signature').value = canvas.toDataURL();
+});
 
-        function draw(e) {
-            if (!isDrawing) return;
-            
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(e.offsetX, e.offsetY);
-            ctx.stroke();
-            
-            [lastX, lastY] = [e.offsetX, e.offsetY];
-        }
+function clearSignature() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('signature').value = '';
+}
 
-        function stopDrawing() {
-            isDrawing = false;
-            document.getElementById('signature').value = canvas.toDataURL();
-        }
-
-        function clearSignature() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('signature').value = '';
-        }
 
         // Submit form
         document.getElementById('attendanceForm').addEventListener('submit', function(e) {
